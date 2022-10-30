@@ -67,11 +67,15 @@ static int test_suit( struct test const* tests, int numtests ) {
 // ----------------------------------------------------------- Unit tests: ---
 
 static int escape( void ) {
-    char buff[512];
-    char* p = json_objOpen( buff, NULL );
-    p = json_str( p, "name", "\tHello: \"man\"\n" );
-    p = json_objClose( p );
-    p = json_end( p );
+    enum {
+        bufflen = 512,
+    };
+    char buff[bufflen];
+    size_t remlen = bufflen;
+    char* p = json_objOpen( buff, NULL, &remlen );
+    p = json_str( p, "name", "\tHello: \"man\"\n", &remlen  );
+    p = json_objClose( p, &remlen  );
+    p = json_end( p, &remlen  );
     printf( "\n\n%s\n\n", buff );
     static char const rslt[] = "{\"name\":\"\\tHello: \\\"man\\\"\\n\"}";
     check( p - buff == sizeof rslt - 1 );
@@ -80,11 +84,15 @@ static int escape( void ) {
 }
 
 static int len( void ) {
-    char buff[512];
-    char* p = json_objOpen( buff, NULL );
-    p = json_nstr( p, "name", "\tHello: \"man\"\n", 6 );
-    p = json_objClose( p );
-    p = json_end( p );
+    enum {
+        bufflen = 512
+    };
+    char buff[bufflen];
+    size_t remlen = bufflen;
+    char* p = json_objOpen( buff, NULL, &remlen );
+    p = json_nstr( p, "name", "\tHello: \"man\"\n", 6, &remlen );
+    p = json_objClose( p, &remlen );
+    p = json_end( p, &remlen );
     static char const rslt[] = "{\"name\":\"\\tHello\"}";
     check( p - buff == sizeof rslt - 1 );
     check( 0 == strcmp( buff, rslt ) );
@@ -92,35 +100,39 @@ static int len( void ) {
 }
 
 static int empty( void ) {
-    char buff[512];
+    enum {
+        bufflen = 512
+    };
+    char buff[bufflen];
+    size_t remlen = bufflen;
     {
-        char* p = json_objOpen( buff, NULL );
-        p = json_objClose( p );
-        p = json_end( p );
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         static char const rslt[] = "{}";
         check( p - buff == sizeof rslt - 1 );
         check( 0 == strcmp( buff, rslt ) );
     }
     {
-        char* p = json_objOpen( buff, NULL );
-        p = json_arrOpen( p, "a" );
-        p = json_arrClose( p );
-        p = json_objClose( p );
-        p = json_end( p );
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_arrOpen( p, "a", &remlen );
+        p = json_arrClose( p, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         static char const rslt[] = "{\"a\":[]}";
         check( p - buff == sizeof rslt - 1 );
         check( 0 == strcmp( buff, rslt ) );
     }
     {
-        char* p = json_objOpen( buff, NULL );
-        p = json_arrOpen( p, "a" );
-        p = json_objOpen( p, NULL );
-        p = json_objClose( p );
-        p = json_objOpen( p, NULL );
-        p = json_objClose( p );
-        p = json_arrClose( p );
-        p = json_objClose( p );
-        p = json_end( p );
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_arrOpen( p, "a", &remlen );
+        p = json_objOpen( p, NULL, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_objOpen( p, NULL, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_arrClose( p, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         static char const rslt[] = "{\"a\":[{},{}]}";
         check( p - buff == sizeof rslt - 1 );
         check( 0 == strcmp( buff, rslt ) );
@@ -134,15 +146,19 @@ static int empty( void ) {
 #endif
 
 static int primitive( void ) {
-    char buff[512];
-    char* p = json_objOpen( buff, NULL );
-    p = json_verylong( p, "max",  LONG_LONG_MAX );
-    p = json_verylong( p, "min",  LONG_LONG_MIN );
-    p = json_bool( p, "boolvar0", 0 );
-    p = json_bool( p, "boolvar1", 1 );
-    p = json_null( p, "nullvar" );
-    p = json_objClose( p );
-    p = json_end( p );
+    enum {
+        bufflen = 512
+    };
+    char buff[bufflen];
+    size_t remlen = bufflen;
+    char* p = json_objOpen( buff, NULL, &remlen );
+    p = json_verylong( p, "max",  LONG_LONG_MAX, &remlen );
+    p = json_verylong( p, "min",  LONG_LONG_MIN, &remlen );
+    p = json_bool( p, "boolvar0", 0, &remlen );
+    p = json_bool( p, "boolvar1", 1, &remlen );
+    p = json_null( p, "nullvar", &remlen );
+    p = json_objClose( p, &remlen );
+    p = json_end( p, &remlen );
     static char const rslt[] =  "{"
                                     "\"max\":9223372036854775807,"
                                     "\"min\":-9223372036854775808,"
@@ -156,24 +172,29 @@ static int primitive( void ) {
 }
 
 static int integers( void ) {
+    enum {
+        bufflen = 64
+    };
     {
-        char buff[64];
-        char* p = json_objOpen( buff, NULL );
-        p = json_int( p, "a", 0 );
-        p = json_int( p, "b", 1 );
-        p = json_objClose( p );
-        p = json_end( p );
+        char buff[bufflen];
+        size_t remlen = bufflen;
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_int( p, "a", 0, &remlen );
+        p = json_int( p, "b", 1, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         static char const rslt[] = "{\"a\":0,\"b\":1}";
         check( p - buff == sizeof rslt - 1 );
         check( 0 == strcmp( buff, rslt ) );
     }
     {
-        char buff[64];
-        char* p = json_objOpen( buff, NULL );
-        p = json_int( p, "max", INT_MAX );
-        p = json_int( p, "min", INT_MIN );
-        p = json_objClose( p );
-        p = json_end( p );
+        char buff[bufflen];
+        size_t remlen = bufflen;
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_int( p, "max", INT_MAX, &remlen );
+        p = json_int( p, "min", INT_MIN, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         char rslt[ sizeof buff ];
         int len = sprintf( rslt, "{\"max\":%d,\"min\":%d}", INT_MAX, INT_MIN );
         check( len < sizeof buff );
@@ -181,11 +202,12 @@ static int integers( void ) {
         check( 0 == strcmp( buff, rslt ) );
     }
     {
-        char buff[64];
-        char* p = json_objOpen( buff, NULL );
-        p = json_uint( p, "max", UINT_MAX );
-        p = json_objClose( p );
-        p = json_end( p );
+        char buff[bufflen];
+        size_t remlen = bufflen;
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_uint( p, "max", UINT_MAX, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         char rslt[ sizeof buff ];
         int len = sprintf( rslt, "{\"max\":%u}", UINT_MAX );
         check( len < sizeof buff );
@@ -193,12 +215,13 @@ static int integers( void ) {
         check( 0 == strcmp( buff, rslt ) );
     }
     {
-        char buff[64];
-        char* p = json_objOpen( buff, NULL );
-        p = json_long( p, "max", LONG_MAX );
-        p = json_long( p, "min", LONG_MIN );
-        p = json_objClose( p );
-        p = json_end( p );
+        char buff[bufflen];
+        size_t remlen = bufflen;
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_long( p, "max", LONG_MAX, &remlen );
+        p = json_long( p, "min", LONG_MIN, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         char rslt[ sizeof buff ];
         int len = sprintf( rslt, "{\"max\":%ld,\"min\":%ld}", LONG_MAX, LONG_MIN );
         check( len < sizeof buff );
@@ -206,11 +229,12 @@ static int integers( void ) {
         check( 0 == strcmp( buff, rslt ) );
     }
     {
-        char buff[64];
-        char* p = json_objOpen( buff, NULL );
-        p = json_ulong( p, "max", ULONG_MAX );
-        p = json_objClose( p );
-        p = json_end( p );
+        char buff[bufflen];
+        size_t remlen = bufflen;
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_ulong( p, "max", ULONG_MAX, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         char rslt[ sizeof buff ];
         int len = sprintf( rslt, "{\"max\":%lu}", ULONG_MAX );
         check( len < sizeof buff );
@@ -218,12 +242,13 @@ static int integers( void ) {
         check( 0 == strcmp( buff, rslt ) );
     }
     {
-        char buff[64];
-        char* p = json_objOpen( buff, NULL );
-        p = json_verylong( p, "max", LONG_LONG_MAX );
-        p = json_verylong( p, "min", LONG_LONG_MIN );
-        p = json_objClose( p );
-        p = json_end( p );
+        char buff[bufflen];
+        size_t remlen = bufflen;
+        char* p = json_objOpen( buff, NULL, &remlen );
+        p = json_verylong( p, "max", LONG_LONG_MAX, &remlen );
+        p = json_verylong( p, "min", LONG_LONG_MIN, &remlen );
+        p = json_objClose( p, &remlen );
+        p = json_end( p, &remlen );
         char rslt[ sizeof buff ];
         int len = sprintf( rslt, "{\"max\":%lld,\"min\":%lld}", LONG_LONG_MAX, LONG_LONG_MIN );
         check( len < sizeof buff );
@@ -234,14 +259,18 @@ static int integers( void ) {
 }
 
 static int array( void ) {
-    char buff[64];
-    char* p = json_objOpen( buff, NULL );
-    p = json_arrOpen( p, "a" );
+    enum {
+        bufflen = 64
+    };
+    char buff[bufflen];
+    size_t remlen = bufflen;
+    char* p = json_objOpen( buff, NULL, &remlen );
+    p = json_arrOpen( p, "a", &remlen );
     for( int i = 0; i < 4; ++i )
-        p = json_int( p, NULL, i );
-    p = json_arrClose( p );
-    p = json_objClose( p );
-    p = json_end( p );
+        p = json_int( p, NULL, i, &remlen );
+    p = json_arrClose( p, &remlen );
+    p = json_objClose( p, &remlen );
+    p = json_end( p, &remlen );
     static char const rslt[] = "{\"a\":[0,1,2,3]}";
     check( p - buff == sizeof rslt - 1 );
     check( 0 == strcmp( buff, rslt ) );
@@ -249,15 +278,19 @@ static int array( void ) {
 }
 
 static int real( void ) {
-    char buff[64];
-    char* p = json_objOpen( buff, NULL );
-    p = json_arrOpen( p, "data" );
+    enum {
+        bufflen = 64
+    };
+    char buff[bufflen];
+    size_t remlen = bufflen;
+    char* p = json_objOpen( buff, NULL, &remlen );
+    p = json_arrOpen( p, "data", &remlen );
     static double const lut[] = { 0.2, 2e-6, 5e6 };
     for( int i = 0; i < sizeof lut / sizeof *lut; ++i )
-        p = json_double( p, NULL, lut[i] );
-    p = json_arrClose( p );
-    p = json_objClose( p );
-    p = json_end( p );
+        p = json_double( p, NULL, lut[i], &remlen );
+    p = json_arrClose( p, &remlen );
+    p = json_objClose( p, &remlen );
+    p = json_end( p, &remlen );
 #ifdef NO_SPRINTF
     static char const rslt1[] = "{\"data\":[0,0,5000000]}";
     static char const rslt2[] = "{\"data\":[0,0,5000000]}";

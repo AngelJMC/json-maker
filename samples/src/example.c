@@ -51,45 +51,45 @@ struct data {
 
 /* Add a time object property in a JSON string.
   "name":{"temp":-5,"hum":48}, */
-char* json_weather( char* dest, char const* name, struct weather const* weather ) {
-    dest = json_objOpen( dest, name );              // --> "name":{\0
-    dest = json_int( dest, "temp", weather->temp ); // --> "name":{"temp":22,\0
-    dest = json_int( dest, "hum", weather->hum );   // --> "name":{"temp":22,"hum":45,\0
-    dest = json_objClose( dest );                   // --> "name":{"temp":22,"hum":45},\0
+char* json_weather( char* dest, char const* name, struct weather const* weather, size_t* remlen ) {
+    dest = json_objOpen( dest, name, remlen );              // --> "name":{\0
+    dest = json_int( dest, "temp", weather->temp, remlen ); // --> "name":{"temp":22,\0
+    dest = json_int( dest, "hum", weather->hum, remlen );   // --> "name":{"temp":22,"hum":45,\0
+    dest = json_objClose( dest, remlen );                   // --> "name":{"temp":22,"hum":45},\0
     return dest;
 }
 
 /* Add a time object property in a JSON string.
   "name":{"hour":18,"minute":32}, */
-char* json_time( char* dest, char const* name, struct time const* time ) {
-    dest = json_objOpen( dest, name );
-    dest = json_int( dest, "hour",   time->hour   );
-    dest = json_int( dest, "minute", time->minute );
-    dest = json_objClose( dest );
+char* json_time( char* dest, char const* name, struct time const* time, size_t* remlen ) {
+    dest = json_objOpen( dest, name, remlen );
+    dest = json_int( dest, "hour",   time->hour, remlen );
+    dest = json_int( dest, "minute", time->minute, remlen );
+    dest = json_objClose( dest, remlen );
     return dest;
 }
 
 /* Add a measure object property in a JSON string.
  "name":{"weather":{"temp":-5,"hum":48},"time":{"hour":18,"minute":32}}, */
-char* json_measure( char* dest, char const* name, struct measure const* measure ) {
-    dest = json_objOpen( dest, name );
-    dest = json_weather( dest, "weather", &measure->weather );
-    dest = json_time( dest, "time", &measure->time );
-    dest = json_objClose( dest );
+char* json_measure( char* dest, char const* name, struct measure const* measure, size_t* remlen ) {
+    dest = json_objOpen( dest, name, remlen );
+    dest = json_weather( dest, "weather", &measure->weather, remlen );
+    dest = json_time( dest, "time", &measure->time, remlen );
+    dest = json_objClose( dest, remlen );
     return dest;
 }
 
 /* Add a data object property in a JSON string. */
-char* json_data( char* dest, char const* name, struct data const* data ) {
-    dest = json_objOpen( dest, NULL );
-    dest = json_str( dest, "city",   data->city );
-    dest = json_str( dest, "street", data->street );
-    dest = json_measure( dest, "measure", &data->measure );
-    dest = json_arrOpen( dest, "samples" );
+char* json_data( char* dest, char const* name, struct data const* data, size_t* remlen ) {
+    dest = json_objOpen( dest, NULL, remlen );
+    dest = json_str( dest, "city",   data->city, remlen );
+    dest = json_str( dest, "street", data->street, remlen );
+    dest = json_measure( dest, "measure", &data->measure, remlen );
+    dest = json_arrOpen( dest, "samples", remlen );
     for( int i = 0; i < 4; ++i )
-        dest = json_int( dest, NULL, data->samples[i] );
-    dest = json_arrClose( dest );
-    dest = json_objClose( dest );
+        dest = json_int( dest, NULL, data->samples[i], remlen );
+    dest = json_arrClose( dest, remlen );
+    dest = json_objClose( des, remlen  );
     return dest;
 }
 
@@ -97,9 +97,9 @@ char* json_data( char* dest, char const* name, struct data const* data ) {
   * @param dest Destination memory block.
   * @param data Source data structure.
   * @return  The JSON string length. */
-int data_to_json( char* dest, struct data const* data ) {
-    char* p = json_data( dest, NULL, data );
-    p = json_end( p );
+int data_to_json( char* dest, struct data const* data, size_t* remlen ) {
+    char* p = json_data( dest, NULL, data, remlen );
+    p = json_end( p, remlen );
     return p - dest;
 }
 
@@ -148,8 +148,12 @@ int main(int argc, char** argv) {
             512
         }
     };
-    char buff[512];
-    int len = data_to_json( buff, &data );
+    enum {
+        bufflen = 512
+    };
+    char buff[bufflen];
+    size_t remlen = bufflen;
+    int len = data_to_json( buff, &data, &remlen );
     if( len >= sizeof buff ) {
         fprintf( stderr, "%s%d%s%d\n", "Error. Len: ", len, " Max: ", (int)sizeof buff - 1 );
         return EXIT_FAILURE;
